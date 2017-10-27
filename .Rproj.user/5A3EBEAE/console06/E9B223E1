@@ -1,0 +1,73 @@
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241[?1034hPengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ [KPengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ which git
+/usr/bin/git
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ git --version
+xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ which git
+/usr/bin/git
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ git --version
+xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ ruby -e "$(curl -fsSL  https://raw.github.com/Homebrew/homebrew/go/install)"
+brew install git
+curl: (22) The requested URL returned error: 404 Not Found
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ brew install git
+bash: brew: command not found
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ which git
+/usr/bin/git
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ git --version
+xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ 
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ 
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ 
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ which git
+/usr/bin/git
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ git config --global u ser.name 'Your Name'
+xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ git config --global u ser.email 'your@email.com'git config --global user.name ‘wp2241’
+xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ git config --global u ser.email ‘wp2241@cumc.columbia.edu’
+xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ sudo apt-get install  git-core
+
+WARNING: Improper use of the sudo command could lead to data loss
+or the deletion of important system files. Please double-check your
+typing when using sudo. Type "man sudo" for more information.
+
+To proceed, enter your password, or type Ctrl-C to abort.
+
+Password:
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ 
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ git --version
+xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ 
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ which git
+/usr/bin/git
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ git --version
+xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ locate git
+
+WARNING: The locate database (/var/db/locate.database) does not exist.
+To create the database, run the following command:
+
+  sudo launchctl load -w /System/Library/LaunchDaemons/com.apple.locate.plist
+
+Please be aware that the database can take some time to generate; once
+the database has been created, this message will no longer appear.
+
+]0;~/Desktop/Graduate School/Fall 17-18/Data science I/HW/p8105_hw4_wp2241PengWeixins-MacBook-Air:p8105_hw4_wp2241 pengweixin$ sudo launchctl load - w /System/Library/LaunchDaemons/com.apple.locate.plist
+
+WARNING: Improper use of the sudo command could lead to data loss
+or the deletion of important system files. Please double-check your
+typing when using sudo. Type "man sudo" for more information.
+
+To proceed, enter your password, or type Ctrl-C to abort.
+
+sudo launchctl load - w /System/Library/LaunchDaemons/com.apple.locate.plist
+
+WARNING: Improper use of the sudo command could lead to data loss
+or the deletion of important system files. Please double-check your
+typing when using sudo. Type "man sudo" for more information.
+
+To proceed, enter your password, or type Ctrl-C to abort.
+
+Password:

@@ -1,0 +1,130 @@
+---
+title: "p8105_hw2_wp2241"
+author: "Weixin Peng"
+date: "September 28, 2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+Problem 1
+```{r}
+library(tidyverse)
+library(readxl)
+library(haven)
+library(janitor)
+library(dplyr)
+
+trashwheel = read_excel("../data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", sheet = "Mr. Trash Wheel", range = cell_cols("A:N")) 
+
+ntrashwheel = janitor::clean_names(trashwheel) 
+names(ntrashwheel) 
+filter(ntrashwheel, dumpster != "NA") 
+
+round(ntrashwheel$sports_balls, digits = 0)
+as.integer(ntrashwheel$sports_balls)
+
+precipitation16 = read_excel("../data/HealthyHarborWaterWheelTotals2017-3.xlsx", sheet = "2016 Precipitation", range = cell_rows(2:15) )
+
+precipitation17 = read_excel("../data/HealthyHarborWaterWheelTotals2017-3.xlsx", sheet = "2017 Precipitation" , range = cell_rows(2:15))
+
+nprecipitation16 = janitor::clean_names(precipitation16) 
+nprecipitation17 = janitor::clean_names(precipitation17) 
+
+np16 = filter(nprecipitation16, month != "NA")
+np17 = filter(nprecipitation17, month != "NA", total != "NA")
+
+p16 = mutate(np16, year = 2016)
+p17 = mutate(np17, year= 2017)
+
+p1617 = full_join(p16, p17, by = c("total", "month", "year"), copy = TRUE)
+mutate(p1617, month = month.name[month]) %>%
+select(year, month, everything())
+
+sportsball = filter(ntrashwheel, year == 2016)
+```
+There are 12 entries in the 2016 precipitation data, and the mean is `r mean(p16$total)`. The maximum value of precipitation for 2016 is `r max(p16$total)`, and the minimum is `r min(p16$total)`. There are only 3 entries in the 2017 precipitation data. The total precipitation data in 2016 and 2017 has a mean of `r mean(p1617$total)`. The maximum value is `r max(p1617$total)`, and the minimum value is `r min(p1617$total)`. The total precipitation in 2017 is `r sum(p17$total)`. The median number of sports balls in a dumpster in 2016 is `r median(sportsball$sports_balls)`.
+
+
+Problem 2
+```{r}
+pols_month = read_csv("../data/538_data/pols-month.csv") %>%
+separate(mon, into = c("year", "month", "day"), sep = "-") %>%
+mutate(
+  month = as.integer(month),
+  year = as.integer(year),
+  day = as.integer(day),
+  month = month.name[month]) %>%
+
+mutate(., president = prez_dem) %>%
+  mutate(., president = recode(president, '0' = "gop", '1' = "dem")) %>%
+  select(., -day, -prez_gop, -prez_dem) %>%
+  arrange(desc(year))
+
+```
+```{r}
+snp = read_csv("../data/538_data/snp.csv") %>%
+separate(date, into = c("month", "day", "year"), sep = "/") %>%
+mutate(
+  month = as.integer(month),
+  year = as.integer(year),
+  day = as.integer(day),
+  month = month.name[month]) %>%
+  
+  select(.data = ., -day) %>%
+  select(year, month, everything())
+```
+```{r}
+unemploy = read_csv("../data/538_data/unemployment.csv") %>%
+  gather(month, unemployment_rate, -Year) %>%
+  mutate(month = parse_character(month),
+         unemployment_rate = parse_number(unemployment_rate)) %>%
+mutate(.,month = month.name[match(month, month.abb)])
+
+unemploy = janitor::clean_names(unemploy) 
+unemployment = arrange(unemploy, desc(year) )
+```
+
+```{r}
+pas = full_join(pols_month, snp, by = c("year", "month"), copy = TRUE)
+data = full_join(pas, unemployment, by = c("year", "month"), copy = TRUE) 
+
+une = filter(data, month == "January", president == "dem", year >= 1975)
+```
+The pols_month data set has 822 entries and 9 variables. It shows the information about the number of republican or democratic governers from 1947 to 2015. The snp data has 787 entries and 3 variables. It gives values of S&P index which reflects the stock market. The minimum closing S&P index is `r min(snp$close)`, and the maximum is `r max(snp$close)`. The mean S&P index is `r mean(snp$close)`, and the median is `r median(snp$close)`. The difference in mean and median shows that the data is right skewed. The combined dataset has 828 entries and 11 variables. It contains several important variables like S&P index, unemployment rate and the governers from 1947 to 2015, which gives us a chance to further analyze how those three variables are related, or if they are related. The average unemployment rate in January after 1975 when democrat was president is `r mean(une$unemployment_rate)`.
+
+
+Problem 3
+```{r}
+instacart = read_csv("../data/orders_train_allvars.csv") 
+summary(instacart)
+#There are 1384617 entries in the data set. 
+length(unique(instacart$order_id))
+#There are 131209 unique orders in the data set. 
+produce = filter(instacart, department == "produce")
+hist(produce$order_hour_of_day)
+aisleproduce = distinct(produce, aisle, department)
+
+dairyeggs = filter(instacart, department == "dairy eggs")
+aisledairyeggs = distinct(dairyeggs, aisle, department)
+#Every aisle sells products from only one department.
+
+which.max(table(instacart$department))
+which.min(table(instacart$department))
+#Department produce is mostly ordered from, and department bulk is the least ordered one. 
+
+mediandata = distinct(instacart, order_id, days_since_prior_order)
+median(mediandata$days_since_prior_order)
+#The median number of days since the prior order is 15.
+
+pinklady = filter(instacart, product_name == "Pink Lady Apples")
+median(pinklady$order_hour_of_day)
+#The median hour of the day at which pink lady apple are ordered is 11 hrs.
+
+coffeeicecream = filter(instacart, product_name == "Coffee Ice Cream")
+median(coffeeicecream$order_hour_of_day)
+#The median hour of the day at which coffee ice cream are ordered is 15 hrs.
+
+
+
+```
+

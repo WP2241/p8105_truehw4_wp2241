@@ -1,0 +1,32 @@
+---
+title: "p8105_hw4_wp2241"
+author: "Weixin Peng"
+date: "October 25, 2017"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(dplyr)
+library(ggridges)
+```
+
+```{r}
+pols_month = read_csv("./538_data/pols-month.csv")
+gdp = read_csv("./538_data/GDP.csv") %>%
+  janitor::clean_names()
+
+pols_month = pols_month %>%
+  mutate(president = prez_dem) %>%
+  mutate(president = recode(president, '0' = "gop", '1' = "dem")) %>%
+  select(-prez_gop, -prez_dem) %>%
+  rename(date = mon) %>%
+  mutate(
+  date = lubridate::floor_date(date,"month"))
+
+merge(gdp, pols_month, by = "date")
+
+
+
+```

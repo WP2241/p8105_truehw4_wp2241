@@ -1,0 +1,250 @@
+---
+title: "p8105_hw3_wp2241"
+author: "Weixin Peng"
+date: "October 6, 2017"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(readxl)
+library(haven)
+library(janitor)
+library(ggridges)
+```
+Problem 1
+
+```{r}
+#1.
+pulse_data = read_sas("../data/public_pulse_data.sas7bdat") 
+pulsedata = janitor::clean_names(pulse_data)  
+pd = filter(pulsedata, bdiscore_bl != "NA",
+       bdiscore_01m != "NA",
+       bdiscore_06m != "NA",
+       bdiscore_12m != "NA")
+#The dataset includes 1087 subjects. The dataset that omit the NA observations has 551 observations in total. It includes information about age, sex and BDI score for the baseline and three different time points. 
+
+#2.
+gather(pulsedata, key = visits, value = bdiscore, bdiscore_bl:bdiscore_12m, na.rm = TRUE) %>%
+group_by(., id) %>%
+summarize(., nvisits = n()) %>%
+group_by(., nvisits) %>%
+summarize(., nsubjects = n())
+
+#3.
+gather(pulsedata, key = visits, value = bdiscore, bdiscore_bl:bdiscore_12m, na.rm = TRUE) %>%
+group_by(., visits) %>%
+summarize(., mean = mean(bdiscore),
+          median = median(bdiscore),
+          sd = sd(bdiscore))
+#boxplot
+gather(pulsedata, key = visits, value = bdiscore, bdiscore_bl:bdiscore_12m, na.rm = TRUE) %>%
+ggplot(., aes(x = visits, y = bdiscore)) + geom_boxplot() 
+
+#violin plot  
+gather(pulsedata, key = visits, value = bdiscore, bdiscore_bl:bdiscore_12m, na.rm = TRUE) %>%
+ggplot(., aes(x = visits, y = bdiscore)) + 
+  geom_violin(aes(fill = visits), color = "blue", alpha = .5) + 
+  stat_summary(fun.y = median, geom = "point", color = "blue", size = 4) 
+# Comment: There are lots of outliers for BDI score, and they all have large values. Most of the scores gather between 0 and 10. 
+
+
+#4.
+pulsedata %>%
+gather(key = visits, value = bdiscore, bdiscore_bl:bdiscore_12m) %>%
+mutate(visits = replace(visits, visits == "bdiscore_bl", "00m")) %>%
+separate(col = visits, into = c("visits", "remove"), sep = 2) %>%
+select(-remove) %>%
+mutate(visit = as.numeric(visits),
+       bdiscore = as.numeric(bdiscore)) %>% 
+
+ggplot(aes(x = visit, y = bdiscore, color = bdiscore, group = id)) +
+  geom_point() +
+  geom_path() +
+  labs(title = "Pulse Data",
+    x = "visit",
+    y = "bdi score") +
+        theme(legend.position = "bottom")
+
+  
+```
+
+
+Problem 2
+
+```{r}
+#1.
+instacart = read_csv("../data/orders_train_allvars.csv") 
+group_by(instacart, department) %>%
+summarize(., item_ordered = n()) %>%
+arrange(., desc(item_ordered)) %>%
+head(7)
+
+#2.
+group_by(instacart, department, product_name) %>%
+  summarize(n = n()) %>%
+filter(min_rank(desc(n)) < 2)
+
+#3.
+filter(instacart, product_name %in% c("Pink Lady Apples", "Coffee Ice Cream")) %>%
+group_by(., product_name, order_dow) %>%
+summarize(., mean = mean(order_hour_of_day)) %>%
+spread(., key = order_dow, value = mean )
+
+#4.
+#violin plots
+instacart %>%
+group_by(., department) %>%
+mutate(., IQR = IQR(order_hour_of_day)) %>%
+select(department, order_hour_of_day, IQR) %>%
+ungroup(department) %>%
+mutate(department = forcats::fct_reorder(department, IQR)) %>%
+
+ggplot(., aes(x = department, y = order_hour_of_day)) + 
+  geom_violin(aes(fill = department), color = "blue", alpha = .5) + 
+  stat_summary(fun.y = median, geom = "point", color = "blue", size = 1) + theme(legend.position = "bottom", axis.text.x = element_text(face="bold", size=8, angle=45)) 
+ 
+#ridge plots
+instacart %>%
+group_by(., department) %>%
+mutate(., IQR = IQR(order_hour_of_day)) %>%
+select(department, order_hour_of_day, IQR) %>%
+ungroup(department) %>%
+mutate(department = forcats::fct_reorder(department, IQR)) %>%
+ggplot(., aes(x = order_hour_of_day, y = department)) + 
+  geom_density_ridges(scale = .85)
+
+# Comments: People order items mostly between 8 and 20 o'clock. Departments like personal care has widest IQR, and alcoho has the narrowest IQR. It indicates that personal care and household are necessity for people, and people buy them all the time. Alcohol is not a necessity and people buy it around a certain hour of time during a day.
+
+
+
+
+```
+
+Problem 3
+1.
+```{r}
+nynoaadat = read_csv("../data/nynoaadat.csv") %>%
+clean_names()
+
+# of station:
+station = unique(nynoaadat$id)
+length(station)
+
+#missing data for tmax:
+select(nynoaadat, tmax) %>%
+filter(is.na(tmax)) %>%
+count()
+
+#missing data for snow:
+select(nynoaadat, snow) %>%
+filter(is.na(snow)) %>%
+count()
+
+#by station tmax:
+select(nynoaadat, id, tmax) %>%
+group_by(id) %>%
+filter(is.na(tmax)) %>%
+count() %>%
+print()
+
+#by station snow:
+select(nynoaadat, id, snow) %>%
+group_by(id) %>%
+filter(is.na(snow)) %>%
+count() %>%
+print()
+
+# There are 2595176 observations in this dataset. There are 747 stations in total. The number of NA in tmax is 1134358, and 381221 for snow. The number of missing values are different for different stations. 
+
+```
+
+2.
+```{r}
+nynoaadat %>%
+select(date, snow) %>%
+filter(min_rank(desc(snow)) < 2)
+
+#The largest snowfall on a single day at any single weather station is in 1983. I found supporting information on the government weather website: "Although well-predicted, this classic nor'easter raised havoc across eastern New York and New England. Albany reported 24.5 inches with amounts of just under 30" reported in Saratoga County. For Albany, this storm  is the greatest January snowfall on record and one of the greatest stormsnows.  The heavy snow brought travel to a standstill across many locations, and may injuries were reported due to auto accidents."
+
+#Link: https://www.weather.gov/aly/MajorWinterStorms
+
+```
+
+3.
+```{r}
+nynoaadat %>%
+filter(snow < 100 & snow > 0) %>%
+na.omit %>%
+mutate(ymd = date) %>%
+separate(ymd, into = c("year", "month", "day"), sep = "-") %>%
+mutate(
+    year = as.integer(year),
+    month = as.integer(month),     
+    day = as.integer(day)    
+         ) %>%
+select(year, snow) %>%
+
+ggplot(aes(y = year, x = snow, group = year)) + 
+  geom_density_ridges(scale = 1) + labs(caption = "Distribution fo snowfall values for each year")
+
+# They are clustered mostly between 0 and 40, and some are clustered around 50 to 60. It is because normally the snowfall value is around 0 to 40, with some extreme cases making snowfall values up to 50 and 60. 
+
+
+```
+4.
+```{r}
+nynoaadat %>%
+mutate(ymd = date) %>%
+separate(ymd, into = c("year", "month", "day"), sep = "-") %>%
+mutate(
+    year = as.integer(year),
+    month = as.integer(month),     
+    day = as.integer(day),
+    tmax = as.integer(tmax),
+    tmin = as.integer(tmin)
+         ) %>%
+select(month, tmax, tmin) %>%
+na.omit %>%
+group_by(month) %>%
+mutate(mean_tmax_month = mean(tmax, na.rm = TRUE),
+       mean_tmin_month = mean(tmin, na.rm = TRUE)) %>%
+ggplot(aes(x = as.integer(month))) + 
+  geom_line(aes(y = mean_tmin_month), color="red") + 
+  geom_line(aes(y = mean_tmax_month), color = "blue") + 
+
+  labs(title = "Comparison of Max and Min Tempretures",
+    y = "Temperature",
+    x = "Month",
+    caption = "Comparison between monthly average maximum and minimum temperatures"
+  ) + 
+  theme(legend.position = "bottom")
+
+
+```
+5.
+```{r}
+nynoaadat %>%
+mutate(ymd = date) %>%
+separate(ymd, into = c("year", "month", "day"), sep = "-") %>%
+mutate(
+    year = as.integer(year),
+    month = as.integer(month),     
+    day = as.integer(day),
+    tmax = as.integer(tmax),
+    tmin = as.integer(tmin)
+         ) %>%
+group_by(id, month) %>%
+na.omit %>%
+summarize(
+    average_tmax = mean(tmax, na.rm = TRUE)
+  )  %>%
+  
+ggplot(aes(x = month, y = average_tmax, color = id)) +
+  geom_path(show.legend = F) +
+  labs(title = "Station-specific monthly average tmax",
+    x = "Month",
+    y = "Monthly Average temperature") +
+        theme(legend.position = "bottom")
+# Comment: The monthly average tmax for each station are mostly clustered together. There are only two outliers which shows a different trend and has low tempretures throughout the year.  
+
+```

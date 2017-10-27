@@ -1,0 +1,329 @@
+---
+title: "p8105_midterm_wp2241"
+author: "Weixin Peng"
+date: "October 21, 2017"
+output: html_document
+---
+```{r}
+library(tidyverse)
+library(readxl)
+library(janitor)
+library(ggridges)
+library(ggplot2)
+```
+
+```{r Import Datasets}
+# Import datasets
+accelerometer = read_excel("../data/headstart_data.xlsx", sheet = "accelerometer") 
+accelerometer = janitor::clean_names(accelerometer)
+
+covariates = read_excel("../data/headstart_data.xlsx", sheet = "covariates", range = cell_rows(4:424)) 
+covariates = janitor::clean_names(covariates)
+```
+
+```{r Clean and Combine Datasets}
+# Recode values
+covariates = covariates %>%
+  mutate(
+    season = recode(season_warm, '0' = "warm", '1' = "cold"),
+    sex = recode(sex_female, '0' = "M", '1' = "F"),
+    tv_hr = recode(tv_g2hr, '0' = "less than 2", 
+                   '1' = "more than 2"),
+    video_game_hr = recode(video_g1hr, '0' = "less than 1", 
+                              '1' = "more than 1"),
+    mom_work = recode(mom_work_yes, '0' = "no", '1' = "yes"),
+    asthma = recode(asthma_yes, '0' = "no", '1' = "yes"),
+    mom_born_us = recode(mom_born_us, '0' = "no", '1' = "yes")) %>%
+  select(-season_warm, -sex_female, -tv_g2hr, -video_g1hr, -mom_work_yes, -asthma_yes, -mom_born_us) 
+
+
+total_activity = accelerometer %>%
+  select(id, epoch_37:epoch_144) %>%
+
+# Get total acitivity during the day
+  group_by(id) %>%
+  summarize(total_activity = sum(epoch_37:epoch_144))
+
+# Combine datasets
+headstart = merge(covariates, total_activity, by = "id")
+
+# Basic info about this dataset:
+tbl1 <- table(headstart$sex)
+p1 = 217/420*100
+tbl2 <- table(headstart$asthma)
+p2 = 138/420*100
+
+
+
+```
+
+
+
+The combined headstart dataset has 420 observations of 9 variables. The variables are id, bmiz, season, sex, hours of wathcing TV, hours of playing video game, working status of mom, asthma condition, and the total activity during the day. The percentage of female in the dataset is `r p1`%. The percentage of asthma is `r p2`%. The mean of total activity is `r mean(headstart$total_activity)`. The minimum is `r min(headstart$total_activity)`, and the maximum is `r max(headstart$total_activity)`. 
+
+
+```{r My Explorations}
+# I want to explore how BMI is related to the level of activity.
+data = select(headstart, id, bmiz, total_activity, season) 
+ggplot(data, aes(x = total_activity, y = bmiz)) + 
+  geom_point() + labs(
+    title = "Relationship Between BMI and Total Activity",
+    x = "Total Activity",
+    y = "BMI"
+  ) 
+
+```
+
+
+
+The BMI standardized score looks interesting. At first I thought poeple with low BMI would have more activity. However, this plot shows that people with medium BMI have more activity than people with either a high or low BMI. It makes sense because medium BMI reflects a better health status compared to high or low BMI, which indicates that they may have more activity than others. 
+
+```{r F-test for Variance}
+# Explore hypothesis:
+boys = filter (headstart, sex == "M")
+girls = filter (headstart, sex == "F")
+
+# F-test for variances:
+var.test(boys$total_activity, girls$total_activity, alternative = "two.sided", conf.level = 0.95)
+```
+Since the p-value is arounf 0.000225, which is smaller than the critical value 0.05, we should conduct a two sample t-test with unequal variances.
+
+
+```{r Test for How Activity Relates to Sex}
+#Two sample one-sided t-test with unqual variances:
+#H0: mu1 = mu2
+#H1: mu1 > mu2
+#*mu1 = the mean activity of boys
+#*mu2 = the mean activity of grils
+
+t.test(boys$total_activity, girls$total_activity, var.equal = FALSE, alternative = "greater", conf.level = 0.95)
+
+```
+The test statistics shows a p-value greater than 0.05. Therefore, we fail to reject the null hypothesis. We do not have sufficient evidence to conclude that boys are more active than girls.
+
+```{r Visualization of Season effect}
+# Test for season's effect:
+warm = filter(headstart, season == "warm")
+cold = filter(headstart, season == "cold")
+
+# Visualize density of total activity under different weather:
+ggplot(headstart, aes(x = sex, y = total_activity)) + 
+  geom_violin(aes(fill = sex), color = "blue", alpha = .5) + 
+  stat_summary(fun.y = median, geom = "point", color = "blue", size = 4) + facet_grid(. ~ season) + 
+  labs(
+    title = "Total Activity Between Boys and Girls Under Different Weather",
+    x = "Sex",
+    y = "Total Daily Activity",
+    caption = "Data from the headstart"
+  ) + theme(plot.title = element_text(size=10))
+```
+
+
+This plot shows that in cold weather, boy and girls have similar total activity distributions. Surprisingly, some girls have more activity than boys. Under warm weather, boys tend to have more people that have low daily total activity. Since there is not much difference in winter, I choose to test whether the total activity for boys is less than total activity of girls under warm weather. 
+
+
+```{r Test for variance}
+boy = filter(warm, sex == "M")
+girl = filter(warm, sex == "F")
+# F-test for variance equality:
+var.test(boy$total_activity, girl$total_activity, alternative = "two.sided", conf.level = 0.95)
+```
+
+```{r Test for Seasons Effect on Activity}
+#Two sample one-sided t-test with unqual variances:
+#H0: mu1 = mu2
+#H1: mu1 < mu2
+#*mu1 = the mean activity of boys in warm weather
+#*mu2 = the mean activity of grils in warm weather
+t.test(boy$total_activity, girl$total_activity, var.equal = FALSE, alternative = "less", conf.level = 0.95)
+
+
+```
+
+The p-value is around 0.018, which is less than 0.05. We have sufficient evidence to reject the null hypothesis. We can conclude that mean of girls' activity is significantly greater than the mean of boys' activity in warm weather. The weather does affect the relationship between sex and activity. 
+
+```{r Visualizations}
+# Get the dataset:
+activity = accelerometer %>%
+  select(id, epoch_37:epoch_144) 
+accelerometer_plot = activity %>%
+  group_by(id) %>%
+  summarize(
+            '6' = 0,
+            '7' = sum(epoch_37:epoch_42),
+            '8' = sum(epoch_43:epoch_48),
+            '9' = sum(epoch_49:epoch_54),
+            '10' = sum(epoch_55:epoch_60),
+            '11' = sum(epoch_61:epoch_66),
+            '12' = sum(epoch_67:epoch_72),
+            '13' = sum(epoch_73:epoch_78),
+            '14' = sum(epoch_79:epoch_84),
+            '15' = sum(epoch_85:epoch_90),
+            '16' = sum(epoch_91:epoch_96),
+            '17' = sum(epoch_97:epoch_102),
+            '18' = sum(epoch_103:epoch_108),
+            '19' = sum(epoch_109:epoch_114),
+            '20' = sum(epoch_115:epoch_120),
+            '21' = sum(epoch_121:epoch_126),
+            '22' = sum(epoch_127:epoch_132),
+            '23' = sum(epoch_133:epoch_138),
+            '24' = sum(epoch_139:epoch_144)) 
+  
+accelerometer_data = gather(accelerometer_plot, key = time, value = activity_level, '6':'24') %>%
+  mutate(activity_level = as.numeric(activity_level),
+         id = as.factor(id),
+         time = as.numeric(time)) %>%
+  merge(covariates, by = "id") %>%
+  arrange(id, time)
+
+
+# Keep x-axis the order I want:
+accelerometer_data$time <- factor(accelerometer_data$time, levels=unique(accelerometer_data$time))
+
+# Plot using hours:
+ggplot(accelerometer_data, aes(x = time, y = activity_level)) + 
+  geom_path(alpha = 0.3) +
+  geom_smooth(aes(group = 1), se = FALSE, show.legend = FALSE) +
+  labs(
+    title = "18 hour activity profile",
+    x = "time (from 6am to 12am)",
+    y = "activity level",
+    caption = "Data from the accelerometer"
+  ) + theme_bw() +
+  theme(axis.text.x = element_text(face="bold", size=8, angle=45)) 
+
+# Another graph:
+naccelerometer =  gather(activity, key = epoch, value = activity_level, epoch_37:epoch_144) %>%
+  merge(covariates, by = "id") %>%
+  separate(col = epoch, into = c("remove", "epoch"), sep = "_") %>%
+  select(-remove) %>%
+  mutate(activity_level = as.numeric(activity_level),
+         epoch = as.numeric(epoch))%>%
+  arrange(id, epoch) 
+  
+# Keep x-axis the order I want:
+naccelerometer$epoch <- factor(naccelerometer$epoch, levels=unique(naccelerometer$epoch))
+
+# Plot using epoch with sex:
+ggplot(naccelerometer, aes(x = epoch, y = activity_level)) + 
+  geom_path(alpha = 0.3)+
+  geom_smooth(aes(group = sex, color = sex), se = FALSE, show.legend = TRUE) +
+  labs(
+    title = "18 Hour Activity Profile with  Different Sex",
+    x = "epoch",
+    y = "activity level",
+    caption = "Data from the accelerometer"
+  ) + theme_bw()+
+  theme(axis.text.x = element_text(face="bold", size=2, angle=45))+ 
+facet_grid(. ~ sex) 
+
+
+
+# Plot using epoch with season:
+ggplot(naccelerometer, aes(x = epoch, y = activity_level)) + 
+  geom_path(alpha = 0.3)+
+  geom_smooth(aes(group = season, color = season), se = FALSE, show.legend = FALSE) +
+  labs(
+    title = "18 Hour Activity Profile with different Season",
+    x = "epoch",
+    y = "activity level",
+    caption = "Data from the accelerometer"
+  ) + 
+  theme_bw() +
+  theme(axis.text.x = element_text(face="bold", size=2, angle=45)) + 
+facet_grid(. ~ season) 
+
+
+
+
+# Plot using epoch with tv hours:
+ggplot(naccelerometer, aes(x = epoch, y = activity_level)) + 
+  geom_path(alpha = 0.3)+ 
+  geom_smooth(aes(group = tv_hr, color = tv_hr), se = FALSE, show.legend = FALSE)+
+  labs(
+    title = "18 Hour Activity Profile with TV Hours",
+    x = "epoch",
+    y = "activity level",
+    caption = "Data from the accelerometer"
+  ) + 
+  theme_bw() +
+  theme(axis.text.x = element_text(face="bold", size=2, angle=45)) + 
+facet_grid(. ~ tv_hr) 
+
+
+# Plot using hour with tv hours:
+ggplot(accelerometer_data, aes(x = time, y = activity_level)) + 
+  geom_path(alpha = 0.3) +
+  geom_smooth(aes(group = tv_hr, color = tv_hr), se = FALSE, show.legend = FALSE) +
+  labs(
+    title = "18 hour activity profile",
+    x = "time (from 6am to 12am)",
+    y = "activity level",
+    caption = "Data from the accelerometer"
+  ) + theme_bw() +
+  theme(axis.text.x = element_text(face="bold", size=8, angle=45)) 
+
+
+# Plot using epoch with video game hours:
+ggplot(naccelerometer, aes(x = epoch, y = activity_level)) + 
+  geom_path(alpha = 0.3 )+
+  geom_smooth(aes(group = video_game_hr, color = video_game_hr), se = FALSE, show.legend = FALSE)+
+  labs(
+    title = "18 Hour Activity Profile with Video Game Hours",
+    x = "epoch",
+    y = "activity level",
+    caption = "Data from the accelerometer"
+  ) + 
+  theme_bw() +
+  theme(axis.text.x = element_text(face="bold", size=2, angle=45)) + 
+facet_grid(. ~ video_game_hr) 
+
+
+
+# Plot using epoch with mom's working status:
+ggplot(naccelerometer, aes(x = epoch, y = activity_level)) + 
+  geom_path(alpha = 0.3)+
+  geom_smooth(aes(group = mom_work, color = mom_work), se = FALSE, show.legend = FALSE) +
+  labs(
+    title = "18 Hour Activity Profile with Mom's Working Status",
+    x = "epoch",
+    y = "activity level",
+    caption = "Data from the accelerometer"
+  ) + 
+  theme_bw() +
+  theme(axis.text.x = element_text(face="bold", size=2, angle=45)) + 
+facet_grid(. ~ mom_work) 
+
+
+
+# Plot using epoch with asthma:
+ggplot(naccelerometer, aes(x = epoch, y = activity_level)) + 
+  geom_path(alpha = 0.3)+
+  geom_smooth(aes(group = asthma, color = asthma), se = FALSE, show.legend = FALSE) +
+  labs(
+    title = "18 Hour Activity Profile with Asthma Status",
+    x = "epoch",
+    y = "activity level",
+    caption = "Data from the accelerometer"
+  ) + 
+  theme_bw() +
+  theme(axis.text.x = element_text(face="bold", size=2, angle=45)) + 
+facet_grid(. ~ asthma) 
+```
+
+  The most difference in 18 hour activity profile is by different season. We can observe obvious difference in the mean activity for cold and warm weather. The graph shows that children tend to have less activity during cold weather, which goes along with our common sense. 
+
+  Hours of playing video game also has some effect on activity levels. Children who play video game for more than 2 hour tends to have a slightly lower activity level, and the range of activity of whom playing video game for more than 2 hours is less than the range of whom playing video game for less than 2 hours. The color of the graph on the right is also much less dense than the one on the left, which shows less activity for whom playing video game more than 2 hours. 
+
+  Hours of watching TV has similar effect on activity level as hours of playing video game. It is very interesting that the activity level during 8pm to 11pm has an obvious decrease for children who watch TV for more than 2 hours. Maybe it is becasue they are all watching TV during that time period instead of doing activities. 
+
+  Children who have asthma also tend to have less activity than those who do not because the color density of the right side graph is less than the left side one. Children whose moms work outside home also have less activity according to the density of the color. However, it is not clear that if it is asthma that makes them have less activity or it is the lack of activity that leads to asthma. 
+
+  Therefore, difference in weather, TV watching hours, video game hours, mom's working status, and asthma condition all contributes to the difference in activity levels. 
+
+
+
+
+
+
+
