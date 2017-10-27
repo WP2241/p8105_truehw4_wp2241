@@ -49,3 +49,5 @@ ggplot(data, aes(x = date, y = value)) +
   theme(legend.position = "bottom")
 
 ```
+
+* Comment: From the plot we creat above, we find that the GDP value varys a lot from year to year, especially in the 1930s. For most of the years, the GDP value is above 0, but there exist some year that the GDP is negative value, such as the 1933 and 2007.
