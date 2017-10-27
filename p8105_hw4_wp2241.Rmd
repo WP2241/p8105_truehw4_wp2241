@@ -5,6 +5,7 @@ date: "October 25, 2017"
 output: html_document
 ---
 
+### Preparation
 ```{r}
 library(tidyverse)
 library(janitor)
@@ -12,10 +13,12 @@ library(dplyr)
 library(ggridges)
 ```
 
+### Load and clean data
 ```{r}
 pols_month = read_csv("./538_data/pols-month.csv")
 gdp = read_csv("./538_data/GDP.csv") %>%
-  janitor::clean_names()
+  janitor::clean_names() %>% 
+  mutate(value = as.numeric(value))
 
 pols_month = pols_month %>%
   mutate(president = prez_dem) %>%
@@ -29,5 +32,20 @@ data = merge(gdp, pols_month, by = "date") %>%
   filter(value != ".")
 #data cleared
 
+
+```
+
+### Make a GDP plot
+```{r}
+ggplot(data, aes(x = date, y = value)) + 
+  geom_point(aes(color = president), alpha = .5) + 
+  geom_line() +
+  labs(
+    title = "GDP over time",
+    x = "date",
+    y = "DGP value",
+    caption = "Data from the 538 dataset"
+  ) + 
+  theme(legend.position = "bottom")
 
 ```
